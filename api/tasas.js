@@ -1,5 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const https = require('https');
 
 export default async function handler(req, res) {
   // 1. Configurar CORS para que tu web (frontend) pueda leer esta API sin bloqueos
@@ -16,7 +17,13 @@ export default async function handler(req, res) {
     // 2. SCRAPING AL BCV CON CHEERIO
     // Engañamos un poco al servidor usando un User-Agent de un navegador real 
     // para evitar que el firewall del BCV nos bloquee de inmediato.
+
+    const agent = new https.Agent({  
+      rejectUnauthorized: false
+    });
+
     const bcvResponse = await axios.get('https://www.bcv.org.ve/', {
+        httpsAgent: agent,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
       },

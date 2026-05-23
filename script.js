@@ -16,10 +16,10 @@ const estadoApi = document.getElementById('estado-api');
 async function obtenerTasas() {
   try {
     // IMPORTANTE: Cambia esta URL por la URL real que te dé Vercel al subir tu backend
-    // Por ejemplo: 'https://mi-api-venezuela.vercel.app/api/tasas'
-    const urlTuApi = '/api/tasas'; 
+    // Por ejemplo: 'https://cuantoapp.vercel.app/api/tasas'
+    const APIurl = 'https://cuantoapp.vercel.app/api/tasas'; 
 
-    const respuesta = await fetch(urlTuApi);
+    const respuesta = await fetch(APIurl);
     const json = await respuesta.json();
 
     if (json.success) {
