@@ -91,19 +91,4 @@ function habilitarInputs() {
   });
 }
 
-// === DESACTIVA LOS INPUTS MIENTRAS CARGA (Para evitar errores) ===
-inputUsd.disabled = true;
-inputEur.disabled = true;
-inputUsdt.disabled = true;
-inputVes.disabled = true;
-
-function habilitarInputs() {
-    inputUsd.disabled = false;
-    inputEur.disabled = false;
-    inputUsdt.disabled = false;
-    inputVes.disabled = false;
-    // ... aquí van los EventListeners de arriba (ya incluidos en el bloque anterior)
-}
-
-// Arrancamos el proceso consultando la API
 obtenerTasas();
