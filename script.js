@@ -1,53 +1,51 @@
-// 1. Empezamos con tasas en cero. Se llenarán al consultar tu API.
+
 let tasas = {
   usdBcv: 0,
   eurBcv: 0,
   usdt: 0    
 };
 
-// 2. Conectamos el código con los campos del HTML
 const inputUsd = document.getElementById('usd-input');
 const inputEur = document.getElementById('eur-input');
 const inputUsdt = document.getElementById('usdt-input');
 const inputVes = document.getElementById('ves-input');
 const estadoApi = document.getElementById('estado-api');
 
-// === NUEVO: FUNCIÓN PARA TRAER LOS DATOS DEL BACKEND ===
+
 async function obtenerTasas() {
   try {
-    // IMPORTANTE: Cambia esta URL por la URL real que te dé Vercel al subir tu backend
-    // Por ejemplo: 'https://cuantoapp.vercel.app/api/tasas'
+
     const APIurl = 'https://cuantoapp.vercel.app/api/tasas'; 
 
     const respuesta = await fetch(APIurl);
     const json = await respuesta.json();
 
     if (json.success) {
-      // Si todo sale bien, actualizamos nuestras variables con los datos reales
+      
       tasas.usdBcv = json.data.usdBcv;
       tasas.eurBcv = json.data.eurBcv;
       tasas.usdt = json.data.usdt;
 
-      // Actualizamos el texto de estado
-      const fecha = new Date(json.last_update).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
-      estadoApi.innerHTML = `✅ Tasas actualizadas hoy a las ${fecha}`;
+
+      const fecha = new Date(json.last_update).toLocaleString('es-VE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric'});
+      estadoApi.innerHTML = `Tasas actualizadas: ${fecha}`;
       estadoApi.classList.replace('text-gray-500', 'text-green-600');
 
-      // Ahora sí, encendemos la calculadora
+      
       inicializarCalculadora();
       habilitarInputs();
+
     } else {
-      throw new Error("La API no devolvió éxito");
+      throw new Error("La API no devuelve exito");
     }
 
   } catch (error) {
     console.error("Error al obtener tasas:", error);
-    estadoApi.innerHTML = `⚠️ Error al conectar con el servidor. Intenta más tarde.`;
+    estadoApi.innerHTML = ` Error al conectar con el servidor. Intenta más tarde bb.`;
     estadoApi.classList.replace('text-gray-500', 'text-red-500');
   }
 }
 
-// === LÓGICA DE LA CALCULADORA ===
 
 function inicializarCalculadora() {
   const valorBaseVes = 1 * tasas.usdBcv; 
@@ -89,6 +87,8 @@ function habilitarInputs() {
     inputUsd.value = (ves / tasas.usdBcv).toFixed(2);
     inputUsdt.value = (ves / tasas.usdt).toFixed(2);
   });
+
+
 }
 
 obtenerTasas();
