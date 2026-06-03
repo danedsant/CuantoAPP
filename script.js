@@ -15,7 +15,7 @@ const estadoApi = document.getElementById('estado-api');
 async function obtenerTasas() {
   try {
 
-    const APIurl = 'https://cuantoapp.vercel.app/api/tasas'; 
+    const APIurl = 'https://churupos.vercel.app/api/tasas'; 
 
     const respuesta = await fetch(APIurl);
     const json = await respuesta.json();
