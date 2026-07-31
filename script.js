@@ -34,14 +34,85 @@ function formatearHace(fecha) {
   return rtf.format(dias, 'day');
 }
 
-function parseInputValue(inputElement) {
-  const value = parseFloat(inputElement.value);
+function parseValorFormateado(str) {
+  const normalizado = str.replace(/\./g, '').replace(',', '.');
+  const value = parseFloat(normalizado);
   return Number.isFinite(value) ? value : 0;
+}
+
+function formatearMiles(raw) {
+  const [intParte, decParte] = raw.split(',');
+  const intFormateado = intParte.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return decParte !== undefined ? `${intFormateado},${decParte}` : intFormateado;
+}
+
+function sanitizarEntrada(valor, esBorrado) {
+  if (esBorrado) {
+    return valor.replace(/[^\d,]/g, '');
+  }
+
+  const limpio = valor.replace(/[^\d.,]/g, '');
+  if (!limpio) return '';
+
+  const tieneComa = limpio.includes(',');
+  const ultimaComa = limpio.lastIndexOf(',');
+  const ultimoPunto = limpio.lastIndexOf('.');
+
+  if (tieneComa) {
+    const entera = limpio.slice(0, ultimaComa).replace(/\D/g, '');
+    const decimal = limpio.slice(ultimaComa + 1).replace(/\D/g, '');
+    return decimal === '' ? `${entera},` : `${entera},${decimal}`;
+  }
+
+  if (ultimoPunto === -1) return limpio;
+
+  const antes = limpio.slice(0, ultimoPunto);
+  const despues = limpio.slice(ultimoPunto + 1);
+
+  if (despues.length <= 2) {
+    return `${antes.replace(/\D/g, '')},${despues}`;
+  }
+
+  return limpio.replace(/\D/g, '');
+}
+
+function escribirFormateado(numero) {
+  return formatearMiles(numero.toFixed(2).replace('.', ','));
+}
+
+function manejarEntrada(e) {
+  const input = e.target;
+  const valorBruto = input.value;
+  const caret = input.selectionStart ?? valorBruto.length;
+  const esBorrado = e.inputType?.startsWith('delete') || e.inputType === 'historyUndo';
+  const insertoPunto = e.inputType === 'insertText' && e.data === '.' && valorBruto.endsWith('.');
+  const caracteresAntes = (valorBruto.slice(0, caret).match(/[\d,]/g) || []).length;
+
+  input.value = formatearMiles(sanitizarEntrada(valorBruto, esBorrado));
+
+  let pos = 0;
+  if (insertoPunto) {
+    pos = input.value.indexOf(',') + 1;
+    if (pos === 0) {
+      pos = input.value.length;
+    }
+  } else {
+    let contador = 0;
+    while (pos < input.value.length && contador < caracteresAntes) {
+      if (/[\d,]/.test(input.value[pos])) {
+        contador++;
+      }
+      pos++;
+    }
+  }
+  input.setSelectionRange(pos, pos);
+
+  actualizarDesdeInput(input.id);
 }
 
 function actualizarDesdeInput(inputId) {
   const inputActual = document.getElementById(inputId);
-  const valorActual = parseInputValue(inputActual);
+  const valorActual = parseValorFormateado(inputActual.value);
 
   let ves = 0;
 
@@ -61,18 +132,29 @@ function actualizarDesdeInput(inputId) {
     ves = valorActual;
   }
 
-  inputVes.value = ves.toFixed(2);
-  inputUsd.value = (ves / tasas.usdBcv).toFixed(2);
-  inputEur.value = (ves / tasas.eurBcv).toFixed(2);
-  inputUsdt.value = (ves / tasas.usdt).toFixed(2);
+  if (inputId !== 'ves-input') {
+    inputVes.value = escribirFormateado(ves);
+  }
+
+  if (inputId !== 'usd-input') {
+    inputUsd.value = escribirFormateado(ves / tasas.usdBcv);
+  }
+
+  if (inputId !== 'eur-input') {
+    inputEur.value = escribirFormateado(ves / tasas.eurBcv);
+  }
+
+  if (inputId !== 'usdt-input') {
+    inputUsdt.value = escribirFormateado(ves / tasas.usdt);
+  }
 }
 
 function ajustarCantidad(inputId, cambio) {
   const inputActual = document.getElementById(inputId);
-  const valorActual = parseInputValue(inputActual);
+  const valorActual = parseValorFormateado(inputActual.value);
   const nuevoValor = Math.max(0, valorActual + cambio);
 
-  inputActual.value = nuevoValor.toString();
+  inputActual.value = escribirFormateado(nuevoValor);
   actualizarDesdeInput(inputId);
 }
 
@@ -95,18 +177,19 @@ function actualizarEstadoApi({ badge, weekday, day, meta, variant }) {
 
 function reiniciarCampo(inputId) {
   const inputActual = document.getElementById(inputId);
-  inputActual.value = '1';
+  inputActual.value = escribirFormateado(1);
   actualizarDesdeInput(inputId);
 }
 
 async function copiarInput(inputId) {
   const inputActual = document.getElementById(inputId);
   const boton = document.querySelector(`[data-input="${inputId}"][data-action="copy"]`);
+  const texto = String(parseValorFormateado(inputActual.value));
 
   let copiado = false;
   if (navigator.clipboard && window.isSecureContext) {
     try {
-      await navigator.clipboard.writeText(inputActual.value);
+      await navigator.clipboard.writeText(texto);
       copiado = true;
     } catch (error) {
       copiado = false;
@@ -114,8 +197,14 @@ async function copiarInput(inputId) {
   }
 
   if (!copiado) {
-    inputActual.select();
+    const textareaTemporal = document.createElement('textarea');
+    textareaTemporal.value = texto;
+    textareaTemporal.style.position = 'fixed';
+    textareaTemporal.style.opacity = '0';
+    document.body.appendChild(textareaTemporal);
+    textareaTemporal.select();
     copiado = document.execCommand('copy');
+    textareaTemporal.remove();
   }
 
   if (copiado && boton) {
@@ -186,17 +275,17 @@ async function obtenerTasas() {
 function inicializarCalculadora() {
   const valorBaseVes = 1 * tasas.usdBcv;
 
-  inputUsd.value = '1.00';
-  inputVes.value = valorBaseVes.toFixed(2);
-  inputEur.value = (valorBaseVes / tasas.eurBcv).toFixed(2);
-  inputUsdt.value = (valorBaseVes / tasas.usdt).toFixed(2);
+  inputUsd.value = escribirFormateado(1);
+  inputVes.value = escribirFormateado(valorBaseVes);
+  inputEur.value = escribirFormateado(valorBaseVes / tasas.eurBcv);
+  inputUsdt.value = escribirFormateado(valorBaseVes / tasas.usdt);
 }
 
 function habilitarInputs() {
-  inputUsd.addEventListener('input', (e) => actualizarDesdeInput(e.target.id));
-  inputUsdt.addEventListener('input', (e) => actualizarDesdeInput(e.target.id));
-  inputVes.addEventListener('input', (e) => actualizarDesdeInput(e.target.id));
-  inputEur.addEventListener('input', (e) => actualizarDesdeInput(e.target.id));
+  inputUsd.addEventListener('input', manejarEntrada);
+  inputUsdt.addEventListener('input', manejarEntrada);
+  inputVes.addEventListener('input', manejarEntrada);
+  inputEur.addEventListener('input', manejarEntrada);
 
   [inputUsd, inputEur, inputUsdt, inputVes].forEach((input) => {
     input.addEventListener('blur', () => window.scrollTo(0, 0));
