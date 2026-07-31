@@ -287,10 +287,6 @@ function habilitarInputs() {
   inputVes.addEventListener('input', manejarEntrada);
   inputEur.addEventListener('input', manejarEntrada);
 
-  [inputUsd, inputEur, inputUsdt, inputVes].forEach((input) => {
-    input.addEventListener('blur', () => window.scrollTo(0, 0));
-  });
-
   document.querySelectorAll('.icon-btn').forEach((button) => {
     button.addEventListener('click', () => {
       const inputId = button.dataset.input;
