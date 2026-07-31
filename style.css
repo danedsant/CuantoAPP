@@ -474,3 +474,40 @@ hr {
   width: 32px;
   height: 32px;
 }
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translate(-50%, 12px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(14, 14, 14, 0.92);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast svg {
+  width: 1rem;
+  height: 1rem;
+  fill: var(--success);
+}
+
+.toast--error svg {
+  fill: var(--error);
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

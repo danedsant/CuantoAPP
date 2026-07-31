@@ -15,6 +15,8 @@ const estadoBadgeText = document.getElementById('estado-badge-text');
 const estadoWeekday = document.getElementById('estado-weekday');
 const estadoDay = document.getElementById('estado-day');
 const estadoMeta = document.getElementById('estado-meta');
+const toast = document.getElementById('toast');
+const toastText = document.getElementById('toast-text');
 const UMBRAL_OBSOLETO_MS = 3 * 60 * 60 * 1000;
 
 function formatearHace(fecha) {
@@ -164,6 +166,18 @@ function reiniciarAnimacion(elemento, clase) {
   elemento.classList.add(clase);
 }
 
+let toastTimeout = null;
+
+function mostrarToast(texto, esError = false) {
+  toastText.textContent = texto;
+  toast.classList.toggle('toast--error', esError);
+  toast.classList.add('toast--visible');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove('toast--visible');
+  }, 1800);
+}
+
 function actualizarEstadoApi({ badge, weekday, day, meta, variant }) {
   estadoBadgeText.textContent = badge;
   estadoWeekday.textContent = weekday;
@@ -221,6 +235,8 @@ async function copiarInput(inputId) {
       boton.setAttribute('aria-label', labelOriginal);
     }, 1500);
   }
+
+  mostrarToast(copiado ? 'Copiado' : 'No se pudo copiar', !copiado);
 }
 
 async function obtenerTasas() {
